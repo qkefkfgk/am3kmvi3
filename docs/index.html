@@ -54,9 +54,13 @@
         const excelFileUrl = 'https://github.com/qkefkfgk/am3kmvi3/raw/main/docs/ksgmemg.xlsx';
         let workbook;
 
-        // Загрузка Excel-файла и инициализация фильтра городов
         fetch(excelFileUrl)
-            .then(response => response.arrayBuffer())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.arrayBuffer();
+            })
             .then(data => {
                 workbook = XLSX.read(new Uint8Array(data), {type: 'array'});
                 const firstSheetName = workbook.SheetNames[0];
@@ -64,6 +68,7 @@
                 const rows = XLSX.utils.sheet_to_json(worksheet, {header: 'A'});
                 
                 const cities = [...new Set(rows.slice(1).map(row => row[columnMapping.city]).filter(Boolean))];
+                console.log('Cities:', cities);  // Debugging output
                 initializeFilter(cities);
             })
             .catch(error => {
@@ -116,6 +121,7 @@
                     return review.city === city && reviewDate.isSameOrBefore(currentMoscowTime);
                 });
 
+            console.log('Filtered reviews:', reviews);  // Debugging output
             displayReviews(reviews);
             document.getElementById('loading').style.display = 'none';
         }
@@ -162,3 +168,4 @@
         }
     </script>
 </body>
+</html>
