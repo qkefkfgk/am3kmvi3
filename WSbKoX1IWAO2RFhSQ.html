@@ -1,0 +1,181 @@
+```html
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Отзывы из Excel</title>
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+    <style>
+        /* Стили остаются без изменений */
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="loading">Загрузка данных...</div>
+        <div id="filter-container" style="display:none;">
+            <select id="city-filter" multiple="multiple">
+                <option value="all">Все города</option>
+            </select>
+        </div>
+        <div id="reviews"></div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment-timezone/0.5.33/moment-timezone-with-data.min.js"></script>
+    <script>
+        const columnMapping = {
+            city: 'A',
+            username: 'B',
+            rating: 'C',
+            review: 'F',
+            date: 'E',
+            photo: ‘G’,
+            representativeResponse: ‘D’,
+            isDispute: 'H'
+        };
+
+        let reviewsData = [];
+        const excelFileUrl = 'https://github.com/qkefkfgk/am3kmvi3/blob/main/ksgmemg.xlsx';
+
+        fetch(excelFileUrl)
+            .then(response => response.arrayBuffer())
+            .then(data => {
+                const workbook = XLSX.read(new Uint8Array(data), {type: 'array'});
+                const firstSheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[firstSheetName];
+                
+                const rows = XLSX.utils.sheet_to_json(worksheet, {header: 'A'});
+                const currentMoscowTime = moment().tz("Europe/Moscow");
+
+                reviewsData = rows.slice(1)
+                    .map(row => {
+                        const mappedRow = {};
+                        for (const [field, column] of Object.entries(columnMapping)) {
+                            mappedRow[field] = row[column];
+                        }
+                        return mappedRow;
+                    })
+                    .filter(review => {
+                        const reviewDate = moment(formatDate(review.date), "DD.MM.YYYY HH:mm").tz("Europe/Moscow");
+                        return reviewDate.isSameOrBefore(currentMoscowTime);
+                    });
+
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('filter-container').style.display = 'block';
+                initializeFilter();
+                displayReviews(reviewsData);
+            })
+            .catch(error => {
+                console.error('Error loading Excel file:', error);
+                document.getElementById('loading').textContent = 'Ошибка загрузки данных. Пожалуйста, попробуйте позже.';
+            });
+
+        function displayReviews(reviews) {
+            const reviewsContainer = document.getElementById('reviews');
+            reviewsContainer.innerHTML = '';
+            reviews.forEach((review, index) => {
+                const reviewElement = document.createElement('div');
+                reviewElement.className = `review animate__animated animate__fadeIn animate__delay-${index}s`;
+                reviewElement.setAttribute('data-city', review.city);
+                reviewElement.innerHTML = `
+                    ${review.isDispute ? '<div class="dispute-label">Отзыв оставлен после спора</div>' : ''}
+                    <div class="review-header">
+                        <span class="username">${review.username || 'Аноним'}</span>
+                        <span class="rating">${review.rating || 'Нет оценки'}</span>
+                    </div>
+                    <div class="review-content">${review.review || 'Нет текста отзыва'}</div>
+                    <div class="review-footer">
+                        <span>${review.city || 'Город не указан'}</span>
+                        <span>${formatDate(review.date) || 'Дата не указана'}</span>
+                    </div>
+                    ${review.photo ? `<img class="thumbnail" src="${review.photo}" alt="Фото товара" onclick="toggleImage(this)">` : ''}
+                    ${review.photo ? `<img class="full-img" src="${review.photo}" alt="Фото товара">` : ''}
+                    ${review.representativeResponse ? `
+                        <div class="representative-response">
+                            <strong>Ответ представителя:</strong> ${review.representativeResponse}
+                        </div>
+                    ` : ''}
+                `;
+                reviewsContainer.appendChild(reviewElement);
+            });
+        }
+
+        function formatDate(dateString) {
+            if (!dateString) return '';
+            // Предполагаем, что дата в формате Excel (серийный номер)
+            const date = new Date((dateString - (25567 + 2)) * 86400 * 1000);
+            return moment(date).tz("Europe/Moscow").format("DD.MM.YYYY HH:mm");
+        }
+
+        function toggleImage(img) {
+            const fullImg = img.nextElementSibling;
+            fullImg.style.display = fullImg.style.display === 'block' ? 'none' : 'block';
+            fullImg.onclick = () => fullImg.style.display = 'none';
+        }
+
+        function initializeFilter() {
+            const cities = [...new Set(reviewsData.map(review => review.city).filter(Boolean))];
+            const cityFilter = document.getElementById('city-filter');
+            cityFilter.innerHTML = '<option value="all">Все города</option>';
+            cities.forEach(city => {
+                const option = document.createElement('option');
+                option.value = city;
+                option.textContent = city;
+                cityFilter.appendChild(option);
+            });
+
+            $('#city-filter').select2({
+                placeholder: 'Выберите город'
+            });
+
+            $('#city-filter').on('change', function() {
+                const selectedCities = $(this).val();
+                const filteredReviews = selectedCities.includes('all') ? reviewsData : reviewsData.filter(review => selectedCities.includes(review.city));
+                displayReviews(filteredReviews);
+            });
+        }
+    </script>
+</body>
+</html>
+```
+
+Ключевые изменения:
+
+1. Добавлены библиотеки Moment.js и Moment Timezone для корректной работы с датами и временными зонами:
+   ```html
+   <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+   <script src="https://cdnjs.cloudflare.com/ajax/libs/moment-timezone/0.5.33/moment-timezone-with-data.min.js"></script>
+   ```
+
+2. При загрузке данных добавлена фильтрация отзывов по дате:
+   ```javascript
+   const currentMoscowTime = moment().tz("Europe/Moscow");
+
+   reviewsData = rows.slice(1)
+       .map(row => {
+           const mappedRow = {};
+           for (const [field, column] of Object.entries(columnMapping)) {
+               mappedRow[field] = row[column];
+           }
+           return mappedRow;
+       })
+       .filter(review => {
+           const reviewDate = moment(formatDate(review.date), "DD.MM.YYYY HH:mm").tz("Europe/Moscow");
+           return reviewDate.isSameOrBefore(currentMoscowTime);
+       });
+   ```
+
+3. Функция `formatDate` теперь использует Moment.js для корректного форматирования даты и времени в московском часовом поясе:
+   ```javascript
+   function formatDate(dateString) {
+       if (!dateString) return '';
+       // Предполагаем, что дата в формате Excel (серийный номер)
+       const date = new Date((dateString - (25567 + 2)) * 86400 * 1000);
+       return moment(date).tz("Europe/Moscow").format("DD.MM.YYYY HH:mm");
+   }
+   ```
