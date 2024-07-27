@@ -8,17 +8,30 @@
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
     <style>
-        /* Стили остаются без изменений */
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f0f0f0; }
+        .container { max-width: 800px; margin: 0 auto; background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        #city-filter { width: 100%; margin-bottom: 20px; }
+        .review { border: 1px solid #ddd; padding: 15px; margin-bottom: 15px; border-radius: 4px; }
+        .review-header { display: flex; justify-content: space-between; margin-bottom: 10px; }
+        .username { font-weight: bold; }
+        .rating { color: #f39c12; }
+        .review-content { margin-bottom: 10px; }
+        .review-footer { font-size: 0.8em; color: #777; }
+        .dispute-label { background-color: #f1c40f; color: white; padding: 2px 5px; border-radius: 3px; font-size: 0.8em; margin-bottom: 5px; display: inline-block; }
+        .thumbnail { max-width: 100px; max-height: 100px; cursor: pointer; }
+        .full-img { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); max-width: 90%; max-height: 90%; z-index: 1000; }
+        .representative-response { margin-top: 10px; padding: 10px; background-color: #e8f5e9; border-radius: 4px; }
+        #loading { text-align: center; margin: 20px 0; }
     </style>
 </head>
 <body>
     <div class="container">
-        <div id="loading">Загрузка данных...</div>
-        <div id="filter-container" style="display:none;">
-            <select id="city-filter" multiple="multiple">
-                <option value="all">Все города</option>
+        <div id="filter-container">
+            <select id="city-filter">
+                <option value="">Выберите город</option>
             </select>
         </div>
+        <div id="loading" style="display:none;">Загрузка отзывов...</div>
         <div id="reviews"></div>
     </div>
 
@@ -39,49 +52,81 @@
             isDispute: 'H'
         };
 
-        let reviewsData = [];
-        const excelFileUrl = 'https://github.com/qkefkfgk/am3kmvi3/blob/main/docs/ksgmemg.xlsx';
+        const excelFileUrl = 'https://raw.githubusercontent.com/your-username/your-repo/main/your-excel-file.xlsx';
+        let workbook;
 
+        // Загрузка Excel-файла и инициализация фильтра городов
         fetch(excelFileUrl)
             .then(response => response.arrayBuffer())
             .then(data => {
-                const workbook = XLSX.read(new Uint8Array(data), {type: 'array'});
+                workbook = XLSX.read(new Uint8Array(data), {type: 'array'});
                 const firstSheetName = workbook.SheetNames[0];
                 const worksheet = workbook.Sheets[firstSheetName];
-                
                 const rows = XLSX.utils.sheet_to_json(worksheet, {header: 'A'});
-                const currentMoscowTime = moment().tz("Europe/Moscow");
-
-                reviewsData = rows.slice(1)
-                    .map(row => {
-                        const mappedRow = {};
-                        for (const [field, column] of Object.entries(columnMapping)) {
-                            mappedRow[field] = row[column];
-                        }
-                        return mappedRow;
-                    })
-                    .filter(review => {
-                        const reviewDate = moment(formatDate(review.date), "DD.MM.YYYY HH:mm").tz("Europe/Moscow");
-                        return reviewDate.isSameOrBefore(currentMoscowTime);
-                    });
-
-                document.getElementById('loading').style.display = 'none';
-                document.getElementById('filter-container').style.display = 'block';
-                initializeFilter();
-                displayReviews(reviewsData);
+                
+                const cities = [...new Set(rows.slice(1).map(row => row[columnMapping.city]).filter(Boolean))];
+                initializeFilter(cities);
             })
             .catch(error => {
                 console.error('Error loading Excel file:', error);
                 document.getElementById('loading').textContent = 'Ошибка загрузки данных. Пожалуйста, попробуйте позже.';
             });
 
+        function initializeFilter(cities) {
+            const cityFilter = document.getElementById('city-filter');
+            cities.forEach(city => {
+                const option = document.createElement('option');
+                option.value = city;
+                option.textContent = city;
+                cityFilter.appendChild(option);
+            });
+
+            $('#city-filter').select2({
+                placeholder: 'Выберите город'
+            });
+
+            $('#city-filter').on('change', function() {
+                const selectedCity = $(this).val();
+                if (selectedCity) {
+                    loadReviews(selectedCity);
+                } else {
+                    document.getElementById('reviews').innerHTML = '';
+                }
+            });
+        }
+
+        function loadReviews(city) {
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('reviews').innerHTML = '';
+
+            const firstSheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[firstSheetName];
+            const rows = XLSX.utils.sheet_to_json(worksheet, {header: 'A'});
+            const currentMoscowTime = moment().tz("Europe/Moscow");
+
+            const reviews = rows.slice(1)
+                .map(row => {
+                    const mappedRow = {};
+                    for (const [field, column] of Object.entries(columnMapping)) {
+                        mappedRow[field] = row[column];
+                    }
+                    return mappedRow;
+                })
+                .filter(review => {
+                    const reviewDate = moment(formatDate(review.date), "DD.MM.YYYY HH:mm").tz("Europe/Moscow");
+                    return review.city === city && reviewDate.isSameOrBefore(currentMoscowTime);
+                });
+
+            displayReviews(reviews);
+            document.getElementById('loading').style.display = 'none';
+        }
+
         function displayReviews(reviews) {
             const reviewsContainer = document.getElementById('reviews');
             reviewsContainer.innerHTML = '';
             reviews.forEach((review, index) => {
                 const reviewElement = document.createElement('div');
-                reviewElement.className = `review animate__animated animate__fadeIn animate__delay-${index}s`;
-                reviewElement.setAttribute('data-city', review.city);
+                reviewElement.className = `review animate__animated animate__fadeIn animate__delay-${index % 5}s`;
                 reviewElement.innerHTML = `
                     ${review.isDispute ? '<div class="dispute-label">Отзыв оставлен после спора</div>' : ''}
                     <div class="review-header">
@@ -107,7 +152,6 @@
 
         function formatDate(dateString) {
             if (!dateString) return '';
-            // Предполагаем, что дата в формате Excel (серийный номер)
             const date = new Date((dateString - (25567 + 2)) * 86400 * 1000);
             return moment(date).tz("Europe/Moscow").format("DD.MM.YYYY HH:mm");
         }
@@ -117,65 +161,7 @@
             fullImg.style.display = fullImg.style.display === 'block' ? 'none' : 'block';
             fullImg.onclick = () => fullImg.style.display = 'none';
         }
-
-        function initializeFilter() {
-            const cities = [...new Set(reviewsData.map(review => review.city).filter(Boolean))];
-            const cityFilter = document.getElementById('city-filter');
-            cityFilter.innerHTML = '<option value="all">Все города</option>';
-            cities.forEach(city => {
-                const option = document.createElement('option');
-                option.value = city;
-                option.textContent = city;
-                cityFilter.appendChild(option);
-            });
-
-            $('#city-filter').select2({
-                placeholder: 'Выберите город'
-            });
-
-            $('#city-filter').on('change', function() {
-                const selectedCities = $(this).val();
-                const filteredReviews = selectedCities.includes('all') ? reviewsData : reviewsData.filter(review => selectedCities.includes(review.city));
-                displayReviews(filteredReviews);
-            });
-        }
     </script>
 </body>
 </html>
 ```
-
-Ключевые изменения:
-
-1. Добавлены библиотеки Moment.js и Moment Timezone для корректной работы с датами и временными зонами:
-   ```html
-   <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
-   <script src="https://cdnjs.cloudflare.com/ajax/libs/moment-timezone/0.5.33/moment-timezone-with-data.min.js"></script>
-   ```
-
-2. При загрузке данных добавлена фильтрация отзывов по дате:
-   ```javascript
-   const currentMoscowTime = moment().tz("Europe/Moscow");
-
-   reviewsData = rows.slice(1)
-       .map(row => {
-           const mappedRow = {};
-           for (const [field, column] of Object.entries(columnMapping)) {
-               mappedRow[field] = row[column];
-           }
-           return mappedRow;
-       })
-       .filter(review => {
-           const reviewDate = moment(formatDate(review.date), "DD.MM.YYYY HH:mm").tz("Europe/Moscow");
-           return reviewDate.isSameOrBefore(currentMoscowTime);
-       });
-   ```
-
-3. Функция `formatDate` теперь использует Moment.js для корректного форматирования даты и времени в московском часовом поясе:
-   ```javascript
-   function formatDate(dateString) {
-       if (!dateString) return '';
-       // Предполагаем, что дата в формате Excel (серийный номер)
-       const date = new Date((dateString - (25567 + 2)) * 86400 * 1000);
-       return moment(date).tz("Europe/Moscow").format("DD.MM.YYYY HH:mm");
-   }
-   ```
