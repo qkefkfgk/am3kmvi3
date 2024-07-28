@@ -208,7 +208,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>Отзывы</h1>
+        <h1>Отзывы (@WorkGCGgbot)</h1>
         <div class="rating-stats">
             <div class="rating-summary">
                 4.9 <span class="rating-stars">★★★★★</span>
@@ -266,7 +266,7 @@
         $(document).ready(function() {
             $('#citySelect').select2({
                 data: cities.map(city => ({ id: city, text: city })),
-                placeholder: "Выберите город (@WorkGCGgbot)"
+                placeholder: "Выберите город"
             });
 
             fetch(jsonFileUrl)
