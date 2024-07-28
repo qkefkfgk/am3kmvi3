@@ -3,37 +3,127 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Отзывы из JSON</title>
+    <title>Отзывы клиентов</title>
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
     <style>
-        .thumbnail { cursor: pointer; }
-        .full-img { display: none; }
-        .dispute-label { color: red; }
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+        }
         .container {
             max-width: 800px;
             margin: 0 auto;
-            padding: 20px;
+            padding: 40px 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 30px;
+            font-weight: 700;
+        }
+        #filter-container {
+            margin-bottom: 30px;
+        }
+        .select2-container--default .select2-selection--single {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            height: 50px;
+            padding: 10px;
+            font-size: 16px;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: 48px;
+        }
+        #loading {
+            text-align: center;
+            font-size: 18px;
+            color: #3498db;
+            margin: 20px 0;
         }
         .review {
-            border-bottom: 1px solid #ddd;
-            padding: 10px 0;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+            transition: transform 0.3s ease;
+        }
+        .review:hover {
+            transform: translateY(-5px);
         }
         .review-header {
             display: flex;
             justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .username {
+            font-weight: 700;
+            color: #2c3e50;
+        }
+        .rating {
+            background-color: #f39c12;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 14px;
         }
         .review-content {
-            margin: 10px 0;
+            margin-bottom: 15px;
+            font-size: 16px;
         }
         .review-footer {
-            font-size: 0.9em;
-            color: #555;
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            color: #7f8c8d;
+        }
+        .dispute-label {
+            color: #e74c3c;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        .thumbnail {
+            max-width: 100px;
+            max-height: 100px;
+            cursor: pointer;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+        .full-img {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .full-img img {
+            max-width: 90%;
+            max-height: 90%;
+        }
+        .representative-response {
+            background-color: #eaf2f8;
+            border-left: 4px solid #3498db;
+            padding: 10px;
+            margin-top: 15px;
+            font-size: 14px;
         }
     </style>
 </head>
 <body>
     <div class="container">
+        <h1>Отзывы клиентов</h1>
         <div id="filter-container">
             <select id="city-filter" style="width: 100%;">
                 <option value="">Выберите город</option>
@@ -125,7 +215,7 @@
                         <span>${formatDate(review.date) || 'Дата не указана'}</span>
                     </div>
                     ${review.photo ? `<img class="thumbnail" src="${review.photo}" alt="Фото товара" onclick="toggleImage(this)">` : ''}
-                    ${review.photo ? `<img class="full-img" src="${review.photo}" alt="Фото товара">` : ''}
+                    ${review.photo ? `<div class="full-img" onclick="this.style.display='none'"><img src="${review.photo}" alt="Фото товара"></div>` : ''}
                     ${review.representativeResponse ? `
                         <div class="representative-response">
                             <strong>Ответ представителя:</strong> ${review.representativeResponse}
@@ -141,10 +231,11 @@
             return moment(dateString, ["YYYY-MM-DD HH:mm:ss", "DD/MM/YY HH:mm"]).tz("Europe/Moscow").format("DD.MM.YYYY HH:mm");
         }
 
-        function toggleImage(img) {
-            const fullImg = img.nextElementSibling;
-            fullImg.style.display = fullImg.style.display === 'block' ? 'none' : 'block';
-            fullImg.onclick = () => fullImg.style.display = 'none';
+        function toggleImage(thumbnail) {
+            const fullImgContainer = thumbnail.nextElementSibling;
+            if (fullImgContainer) {
+                fullImgContainer.style.display = 'flex';
+            }
         }
     </script>
 </body>
