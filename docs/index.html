@@ -227,14 +227,14 @@
         }
 
         function formatDate(dateString) {
-            if (!dateString) return '';
-            return moment(dateString, ["YYYY-MM-DD HH:mm:ss", "DD/MM/YY HH:mm"]).tz("Europe/Moscow").format("DD.MM.YYYY HH:mm");
+            const date = moment(dateString, ["YYYY-MM-DD HH:mm:ss", "DD/MM/YY HH:mm"]).tz("Europe/Moscow");
+            return date.isValid() ? date.format("DD.MM.YYYY HH:mm") : 'Некорректная дата';
         }
 
-        function toggleImage(thumbnail) {
-            const fullImgContainer = thumbnail.nextElementSibling;
-            if (fullImgContainer) {
-                fullImgContainer.style.display = 'flex';
+        function toggleImage(element) {
+            const fullImg = element.nextElementSibling;
+            if (fullImg) {
+                fullImg.style.display = 'flex';
             }
         }
     </script>
