@@ -3,11 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Отзывы из CSV</title>
+    <title>Отзывы из JSON</title>
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
     <style>
-        /* Стили остаются без изменений */
+        .thumbnail { cursor: pointer; }
+        .full-img { display: none; }
+        .dispute-label { color: red; }
     </style>
 </head>
 <body>
@@ -25,32 +27,20 @@
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment-timezone/0.5.33/moment-timezone-with-data.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/papaparse/5.3.0/papaparse.min.js"></script>
     <script>
-        const csvFileUrl = 'https://github.com/qkefkfgk/am3kmvi3/raw/main/docs/njkbhjjkjnl.csv';
-        const columnMapping = {
-            city: 0,
-            username: 1,
-            rating: 2,
-            review: 5,
-            date: 4,
-            photo: 6,
-            representativeResponse: 3,
-            isDispute: 7
-        };
+        const jsonFileUrl = 'https://raw.githubusercontent.com/ваш_пользователь/ваш_репозиторий/main/data.json';
 
-        Papa.parse(csvFileUrl, {
-            download: true,
-            complete: function(results) {
-                const rows = results.data;
-                const cities = [...new Set(rows.slice(1).map(row => row[columnMapping.city]).filter(Boolean))];
+        fetch(jsonFileUrl)
+            .then(response => response.json())
+            .then(data => {
+                const cities = [...new Set(data.map(review => review.city).filter(Boolean))];
                 initializeFilter(cities);
-            },
-            error: function(error) {
-                console.error('Error loading CSV file:', error);
+                window.allReviews = data; // Сохранить все отзывы в глобальную переменную
+            })
+            .catch(error => {
+                console.error('Error loading JSON file:', error);
                 document.getElementById('loading').textContent = 'Ошибка загрузки данных. Пожалуйста, попробуйте позже.';
-            }
-        });
+            });
 
         function initializeFilter(cities) {
             const cityFilter = document.getElementById('city-filter');
@@ -79,33 +69,17 @@
             document.getElementById('loading').style.display = 'block';
             document.getElementById('reviews').innerHTML = '';
 
-            Papa.parse(csvFileUrl, {
-                download: true,
-                complete: function(results) {
-                    const rows = results.data;
-                    const currentMoscowTime = moment().tz("Europe/Moscow");
+            const currentMoscowTime = moment().tz("Europe/Moscow");
 
-                    const reviews = rows.slice(1)
-                        .map(row => {
-                            const mappedRow = {};
-                            for (const [field, index] of Object.entries(columnMapping)) {
-                                mappedRow[field] = row[index];
-                            }
-                            return mappedRow;
-                        })
-                        .filter(review => {
-                            const reviewDate = moment(formatDate(review.date), "DD.MM.YYYY HH:mm").tz("Europe/Moscow");
-                            return review.city === city && reviewDate.isSameOrBefore(currentMoscowTime);
-                        });
+            const reviews = window.allReviews
+                .filter(review => {
+                    const reviewDate = moment(review.date, "YYYY-MM-DD HH:mm:ss").tz("Europe/Moscow");
+                    return review.city === city && reviewDate.isSameOrBefore(currentMoscowTime);
+                })
+                .sort((a, b) => moment(b.date, "YYYY-MM-DD HH:mm:ss") - moment(a.date, "YYYY-MM-DD HH:mm:ss")); // Сортировка по дате
 
-                    displayReviews(reviews);
-                    document.getElementById('loading').style.display = 'none';
-                },
-                error: function(error) {
-                    console.error('Error loading CSV file:', error);
-                    document.getElementById('loading').textContent = 'Ошибка загрузки данных. Пожалуйста, попробуйте позже.';
-                }
-            });
+            displayReviews(reviews);
+            document.getElementById('loading').style.display = 'none';
         }
 
         function displayReviews(reviews) {
@@ -139,8 +113,7 @@
 
         function formatDate(dateString) {
             if (!dateString) return '';
-            const date = new Date((Number(dateString) - 25569) * 86400 * 1000);
-            return moment(date).tz("Europe/Moscow").format("DD.MM.YYYY HH:mm");
+            return moment(dateString, "YYYY-MM-DD HH:mm:ss").tz("Europe/Moscow").format("DD.MM.YYYY HH:mm");
         }
 
         function toggleImage(img) {
