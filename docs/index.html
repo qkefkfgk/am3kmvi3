@@ -3,11 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Отзывы из Excel</title>
+    <title>Отзывы из JSON</title>
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
     <style>
-        /* Стили остаются без изменений */
+        .thumbnail { cursor: pointer; }
+        .full-img { display: none; }
+        .dispute-label { color: red; }
     </style>
 </head>
 <body>
@@ -23,42 +25,20 @@
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment-timezone/0.5.33/moment-timezone-with-data.min.js"></script>
     <script>
-        const columnMapping = {
-            city: 'A',
-            username: 'B',
-            rating: 'C',
-            review: 'F',
-            date: 'E',
-            photo: 'G',
-            representativeResponse: 'D',
-            isDispute: 'H'
-        };
+        const jsonFileUrl = 'https://raw.githubusercontent.com/ваш_пользователь/ваш_репозиторий/main/data.json';
 
-        const excelFileUrl = 'https://github.com/qkefkfgk/am3kmvi3/raw/main/docs/ksgmemg.xlsx';
-        let workbook;
-
-        fetch(excelFileUrl)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok ' + response.statusText);
-                }
-                return response.arrayBuffer();
-            })
+        fetch(jsonFileUrl)
+            .then(response => response.json())
             .then(data => {
-                workbook = XLSX.read(new Uint8Array(data), {type: 'array'});
-                const firstSheetName = workbook.SheetNames[0];
-                const worksheet = workbook.Sheets[firstSheetName];
-                const rows = XLSX.utils.sheet_to_json(worksheet, {header: 1});
-                
-                const cities = [...new Set(rows.slice(1).map(row => row[columnMapping.city.charCodeAt(0) - 65]).filter(Boolean))];
+                const cities = [...new Set(data.map(review => review.city).filter(Boolean))];
                 initializeFilter(cities);
+                window.allReviews = data; // Сохранить все отзывы в глобальную переменную
             })
             .catch(error => {
-                console.error('Error loading Excel file:', error);
+                console.error('Error loading JSON file:', error);
                 document.getElementById('loading').textContent = 'Ошибка загрузки данных. Пожалуйста, попробуйте позже.';
             });
 
@@ -89,23 +69,14 @@
             document.getElementById('loading').style.display = 'block';
             document.getElementById('reviews').innerHTML = '';
 
-            const firstSheetName = workbook.SheetNames[0];
-            const worksheet = workbook.Sheets[firstSheetName];
-            const rows = XLSX.utils.sheet_to_json(worksheet, {header: 1});
             const currentMoscowTime = moment().tz("Europe/Moscow");
 
-            const reviews = rows.slice(1)
-                .map(row => {
-                    const mappedRow = {};
-                    for (const [field, column] of Object.entries(columnMapping)) {
-                        mappedRow[field] = row[column.charCodeAt(0) - 65];
-                    }
-                    return mappedRow;
-                })
+            const reviews = window.allReviews
                 .filter(review => {
-                    const reviewDate = moment(formatDate(review.date), "DD.MM.YYYY HH:mm").tz("Europe/Moscow");
+                    const reviewDate = moment(review.date, "YYYY-MM-DD HH:mm:ss").tz("Europe/Moscow");
                     return review.city === city && reviewDate.isSameOrBefore(currentMoscowTime);
-                });
+                })
+                .sort((a, b) => moment(b.date, "YYYY-MM-DD HH:mm:ss") - moment(a.date, "YYYY-MM-DD HH:mm:ss")); // Сортировка по дате
 
             displayReviews(reviews);
             document.getElementById('loading').style.display = 'none';
@@ -140,10 +111,9 @@
             });
         }
 
-        function formatDate(excelDate) {
-            if (!excelDate) return '';
-            const date = new Date((excelDate - 25569) * 86400 * 1000);
-            return moment(date).tz("Europe/Moscow").format("DD.MM.YYYY HH:mm");
+        function formatDate(dateString) {
+            if (!dateString) return '';
+            return moment(dateString, "YYYY-MM-DD HH:mm:ss").tz("Europe/Moscow").format("DD.MM.YYYY HH:mm");
         }
 
         function toggleImage(img) {
