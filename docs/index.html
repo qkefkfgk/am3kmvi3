@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Отзывы из Excel</title>
+    <title>Отзывы из CSV</title>
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
     <style>
@@ -23,44 +23,34 @@
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment-timezone/0.5.33/moment-timezone-with-data.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/papaparse/5.3.0/papaparse.min.js"></script>
     <script>
+        const csvFileUrl = 'https://github.com/qkefkfgk/am3kmvi3/raw/main/docs/njkbhjjkjnl.csv';
         const columnMapping = {
-            city: 'A',
-            username: 'B',
-            rating: 'C',
-            review: 'F',
-            date: 'E',
-            photo: 'G',
-            representativeResponse: 'D',
-            isDispute: 'H'
+            city: 0,
+            username: 1,
+            rating: 2,
+            review: 5,
+            date: 4,
+            photo: 6,
+            representativeResponse: 3,
+            isDispute: 7
         };
 
-        const excelFileUrl = 'https://github.com/qkefkfgk/am3kmvi3/raw/main/docs/ksgmemg.xlsx';
-        let workbook;
-
-        fetch(excelFileUrl)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok ' + response.statusText);
-                }
-                return response.arrayBuffer();
-            })
-            .then(data => {
-                workbook = XLSX.read(new Uint8Array(data), {type: 'array'});
-                const firstSheetName = workbook.SheetNames[0];
-                const worksheet = workbook.Sheets[firstSheetName];
-                const rows = XLSX.utils.sheet_to_json(worksheet, {header: 1});
-                
-                const cities = [...new Set(rows.slice(1).map(row => row[columnMapping.city.charCodeAt(0) - 65]).filter(Boolean))];
+        Papa.parse(csvFileUrl, {
+            download: true,
+            complete: function(results) {
+                const rows = results.data;
+                const cities = [...new Set(rows.slice(1).map(row => row[columnMapping.city]).filter(Boolean))];
                 initializeFilter(cities);
-            })
-            .catch(error => {
-                console.error('Error loading Excel file:', error);
+            },
+            error: function(error) {
+                console.error('Error loading CSV file:', error);
                 document.getElementById('loading').textContent = 'Ошибка загрузки данных. Пожалуйста, попробуйте позже.';
-            });
+            }
+        });
 
         function initializeFilter(cities) {
             const cityFilter = document.getElementById('city-filter');
@@ -89,26 +79,33 @@
             document.getElementById('loading').style.display = 'block';
             document.getElementById('reviews').innerHTML = '';
 
-            const firstSheetName = workbook.SheetNames[0];
-            const worksheet = workbook.Sheets[firstSheetName];
-            const rows = XLSX.utils.sheet_to_json(worksheet, {header: 1});
-            const currentMoscowTime = moment().tz("Europe/Moscow");
+            Papa.parse(csvFileUrl, {
+                download: true,
+                complete: function(results) {
+                    const rows = results.data;
+                    const currentMoscowTime = moment().tz("Europe/Moscow");
 
-            const reviews = rows.slice(1)
-                .map(row => {
-                    const mappedRow = {};
-                    for (const [field, column] of Object.entries(columnMapping)) {
-                        mappedRow[field] = row[column.charCodeAt(0) - 65];
-                    }
-                    return mappedRow;
-                })
-                .filter(review => {
-                    const reviewDate = moment(formatDate(review.date), "DD.MM.YYYY HH:mm").tz("Europe/Moscow");
-                    return review.city === city && reviewDate.isSameOrBefore(currentMoscowTime);
-                });
+                    const reviews = rows.slice(1)
+                        .map(row => {
+                            const mappedRow = {};
+                            for (const [field, index] of Object.entries(columnMapping)) {
+                                mappedRow[field] = row[index];
+                            }
+                            return mappedRow;
+                        })
+                        .filter(review => {
+                            const reviewDate = moment(formatDate(review.date), "DD.MM.YYYY HH:mm").tz("Europe/Moscow");
+                            return review.city === city && reviewDate.isSameOrBefore(currentMoscowTime);
+                        });
 
-            displayReviews(reviews);
-            document.getElementById('loading').style.display = 'none';
+                    displayReviews(reviews);
+                    document.getElementById('loading').style.display = 'none';
+                },
+                error: function(error) {
+                    console.error('Error loading CSV file:', error);
+                    document.getElementById('loading').textContent = 'Ошибка загрузки данных. Пожалуйста, попробуйте позже.';
+                }
+            });
         }
 
         function displayReviews(reviews) {
@@ -140,9 +137,9 @@
             });
         }
 
-        function formatDate(excelDate) {
-            if (!excelDate) return '';
-            const date = new Date((excelDate - 25569) * 86400 * 1000);
+        function formatDate(dateString) {
+            if (!dateString) return '';
+            const date = new Date((Number(dateString) - 25569) * 86400 * 1000);
             return moment(date).tz("Europe/Moscow").format("DD.MM.YYYY HH:mm");
         }
 
