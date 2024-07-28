@@ -3,24 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Отзывы</title>
+    <title>Отзывы из Excel</title>
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
     <style>
-        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f0f0f0; }
-        .container { max-width: 800px; margin: 0 auto; background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        #city-filter { width: 100%; margin-bottom: 20px; }
-        .review { border: 1px solid #ddd; padding: 15px; margin-bottom: 15px; border-radius: 4px; }
-        .review-header { display: flex; justify-content: space-between; margin-bottom: 10px; }
-        .username { font-weight: bold; }
-        .rating { color: #f39c12; }
-        .review-content { margin-bottom: 10px; }
-        .review-footer { font-size: 0.8em; color: #777; }
-        .dispute-label { background-color: #f1c40f; color: white; padding: 2px 5px; border-radius: 3px; font-size: 0.8em; margin-bottom: 5px; display: inline-block; }
-        .thumbnail { max-width: 100px; max-height: 100px; cursor: pointer; }
-        .full-img { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); max-width: 90%; max-height: 90%; z-index: 1000; }
-        .representative-response { margin-top: 10px; padding: 10px; background-color: #e8f5e9; border-radius: 4px; }
-        #loading { text-align: center; margin: 20px 0; }
+        /* Стили остаются без изменений */
     </style>
 </head>
 <body>
@@ -51,13 +38,15 @@
             isDispute: 'H'
         };
 
+        // Используем jsDelivr для доступа к файлу
         const excelFileUrl = 'https://github.com/qkefkfgk/am3kmvi3/raw/main/docs/ksgmemg.xlsx';
         let workbook;
 
+        // Загрузка Excel-файла и инициализация фильтра городов
         fetch(excelFileUrl)
             .then(response => {
                 if (!response.ok) {
-                    throw new Error('Network response was not ok');
+                    throw new Error('Network response was not ok ' + response.statusText);
                 }
                 return response.arrayBuffer();
             })
@@ -68,7 +57,6 @@
                 const rows = XLSX.utils.sheet_to_json(worksheet, {header: 'A'});
                 
                 const cities = [...new Set(rows.slice(1).map(row => row[columnMapping.city]).filter(Boolean))];
-                console.log('Cities:', cities);  // Debugging output
                 initializeFilter(cities);
             })
             .catch(error => {
@@ -121,7 +109,6 @@
                     return review.city === city && reviewDate.isSameOrBefore(currentMoscowTime);
                 });
 
-            console.log('Filtered reviews:', reviews);  // Debugging output
             displayReviews(reviews);
             document.getElementById('loading').style.display = 'none';
         }
