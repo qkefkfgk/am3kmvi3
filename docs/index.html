@@ -38,11 +38,9 @@
             isDispute: 'H'
         };
 
-        // Используем jsDelivr для доступа к файлу
         const excelFileUrl = 'https://github.com/qkefkfgk/am3kmvi3/raw/main/docs/ksgmemg.xlsx';
         let workbook;
 
-        // Загрузка Excel-файла и инициализация фильтра городов
         fetch(excelFileUrl)
             .then(response => {
                 if (!response.ok) {
@@ -54,9 +52,9 @@
                 workbook = XLSX.read(new Uint8Array(data), {type: 'array'});
                 const firstSheetName = workbook.SheetNames[0];
                 const worksheet = workbook.Sheets[firstSheetName];
-                const rows = XLSX.utils.sheet_to_json(worksheet, {header: 'A'});
+                const rows = XLSX.utils.sheet_to_json(worksheet, {header: 1});
                 
-                const cities = [...new Set(rows.slice(1).map(row => row[columnMapping.city]).filter(Boolean))];
+                const cities = [...new Set(rows.slice(1).map(row => row[columnMapping.city.charCodeAt(0) - 65]).filter(Boolean))];
                 initializeFilter(cities);
             })
             .catch(error => {
@@ -93,14 +91,14 @@
 
             const firstSheetName = workbook.SheetNames[0];
             const worksheet = workbook.Sheets[firstSheetName];
-            const rows = XLSX.utils.sheet_to_json(worksheet, {header: 'A'});
+            const rows = XLSX.utils.sheet_to_json(worksheet, {header: 1});
             const currentMoscowTime = moment().tz("Europe/Moscow");
 
             const reviews = rows.slice(1)
                 .map(row => {
                     const mappedRow = {};
                     for (const [field, column] of Object.entries(columnMapping)) {
-                        mappedRow[field] = row[column];
+                        mappedRow[field] = row[column.charCodeAt(0) - 65];
                     }
                     return mappedRow;
                 })
@@ -142,9 +140,9 @@
             });
         }
 
-        function formatDate(dateString) {
-            if (!dateString) return '';
-            const date = new Date((dateString - (25567 + 2)) * 86400 * 1000);
+        function formatDate(excelDate) {
+            if (!excelDate) return '';
+            const date = new Date((excelDate - 25569) * 86400 * 1000);
             return moment(date).tz("Europe/Moscow").format("DD.MM.YYYY HH:mm");
         }
 
