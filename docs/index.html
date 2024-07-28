@@ -38,9 +38,7 @@
                 return response.json();
             })
             .then(data => {
-                console.log('Loaded data:', data);  // Логирование загруженных данных
                 const cities = [...new Set(data.map(review => review.city).filter(Boolean))];
-                console.log('Cities:', cities);  // Логирование списка городов
                 initializeFilter(cities);
                 window.allReviews = data;
             })
@@ -76,18 +74,24 @@
         }
 
         function matchCustom(params, data) {
+            // If there are no search terms, return all of the data
             if ($.trim(params.term) === '') {
                 return data;
             }
 
+            // Do not display the item if there is no 'text' property
             if (typeof data.text === 'undefined') {
                 return null;
             }
 
+            // `params.term` should be the term that is used for searching
+            // `data.text` is the text that is displayed for the data object
             if (data.text.toLowerCase().indexOf(params.term.toLowerCase()) > -1) {
-                return $.extend({}, data, true);
+                var modifiedData = $.extend({}, data, true);
+                return modifiedData;
             }
 
+            // Return `null` if the term should not be displayed
             return null;
         }
 
