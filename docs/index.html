@@ -31,9 +31,16 @@
         const jsonFileUrl = 'https://github.com/qkefkfgk/am3kmvi3/raw/main/docs/data.json';
 
         fetch(jsonFileUrl)
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok ' + response.statusText);
+                }
+                return response.json();
+            })
             .then(data => {
+                console.log('JSON data loaded:', data); // Отладка
                 const cities = [...new Set(data.map(review => review.city).filter(Boolean))];
+                console.log('Extracted cities:', cities); // Отладка
                 initializeFilter(cities);
                 window.allReviews = data; // Сохранить все отзывы в глобальную переменную
             })
@@ -57,6 +64,7 @@
 
             $('#city-filter').on('change', function() {
                 const selectedCity = $(this).val();
+                console.log('Selected city:', selectedCity); // Отладка
                 if (selectedCity) {
                     loadReviews(selectedCity);
                 } else {
@@ -78,6 +86,7 @@
                 })
                 .sort((a, b) => moment(b.date, "YYYY-MM-DD HH:mm:ss") - moment(a.date, "YYYY-MM-DD HH:mm:ss")); // Сортировка по дате
 
+            console.log('Filtered reviews:', reviews); // Отладка
             displayReviews(reviews);
             document.getElementById('loading').style.display = 'none';
         }
