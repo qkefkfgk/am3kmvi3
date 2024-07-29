@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://code.jquery.com https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com https://cdnjs.cloudflare.com 'unsafe-inline'; font-src https://fonts.gstatic.com; img-src 'self' data:;">
     <title>Отзывы</title>
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
@@ -15,6 +16,10 @@
             padding: 0;
             color: #333;
             line-height: 1.6;
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
         }
         .container {
             max-width: 100%;
@@ -325,7 +330,30 @@
         const jsonFileUrl = 'https://qkefkfgk.github.io/egwegweg/data.json';
         const cities = ["Адлер", "Азов", "Аксай", "Анапа", "Ангарск", "Армавир", "Афипский", "Ачинск", "Балаково", "Батайск", "Белореченск", "Биробиджан", "Благовещенск", "Владикавказ", "Волгодонск", "Волжский", "Вологда", "Гданьск", "Геленджик", "Дербент", "Динская (станица)", "Донецк", "Ейск", "Екатеринбург", "Екатерининская", "Зверево", "Зеленодольск", "Ивановская", "Избербаш", "Иркутск", "Казань", "Калининград", "Каспийск", "Кемерово", "Керчь", "Кизляр", "Колпино", "Копейск", "Кострома", "Краснодар", "Красный сулин", "Кущёвская (станица)", "Луганск", "Махачкала", "Минусинск", "Михайловск", "Моздок", "Москва", "Назрань", "Нальчик", "Невинномысск", "Новая Адыгея", "Новосибирск", "Новочеркасск", "Омск", "Оренбург", "Пермь", "Прохладный", "Пятигорск", "Ростов", "Ростов-на-Дону", "Салехард", "Сальск", "Самара", "Санкт-Петербург", "Саранск", "Саратов", "Светлоград", "Симферополь", "Славянск-на-Кубани", "Сочи", "Ставрополь", "Стерлитамак", "Таганрог", "Тамбов", "Тверь", "Тимашевск", "Тихорецк", "Томск", "Тюмень", "Усолье-Сибирское", "Усть-Илимск", "Устье (Псковская область)", "Устье (Устьянский район)", "Уфа", "Хасавюрт", "Челябинск", "Черемхово", "Черкесск", "Чита", "Чунский", "Шахты", "Якутск", "Ярославль"];
 
+        function escapeHtml(text) {
+            return text.replace(/[&<>"']/g, function(match) {
+                const escape = {
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '"': '&quot;',
+                    "'": '&#39;'
+                };
+                return escape[match];
+            });
+        }
+
         $(document).ready(function() {
+            // Запрет выделения текста
+            $('body').on('selectstart', function(e) {
+                e.preventDefault();
+            });
+
+            // Запрет контекстного меню
+            $(document).on('contextmenu', function(e) {
+                e.preventDefault();
+            });
+
             $('#citySelect').select2({
                 data: cities.map(city => ({ id: city, text: city })),
                 placeholder: "Введите название города...",
@@ -337,15 +365,12 @@
                 }
             });
 
-            // Установка плейсхолдера для поля поиска
             $('.select2-search__field').attr('placeholder', 'Введите название города...');
 
-            // Обработчик для сохранения плейсхолдера при открытии/закрытии выпадающего списка
             $('#citySelect').on('select2:open', function() {
                 $('.select2-search__field').attr('placeholder', 'Введите название города...');
             });
 
-            // Анимация рейтинговых полос
             setTimeout(() => {
                 $('.rating-bar-inner').each(function() {
                     $(this).css('width', $(this).parent().next().text());
@@ -369,7 +394,7 @@
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    $('#reviewsContainer').html('<p>В данном городе отзывы скрыты в целях безопасности. Выберите другой город.</p>');
+                    $('#reviewsContainer').text('В данном городе отзывы скрыты в целях безопасности. Выберите другой город.');
                 });
         });
 
@@ -396,30 +421,39 @@
                         <div class="review-header">
                             <div class="user-info">
                                 <i class="fas fa-user"></i>
-                                <span class="username">${review.username}</span>
+                                <span class="username"></span>
                                 <i class="fab fa-telegram"></i>
                             </div>
                             <div class="date-rating">
-                                <span class="date">${review.date}</span>
-                                <span class="rating">${review.rating}</span>
+                                <span class="date"></span>
+                                <span class="rating"></span>
                             </div>
                         </div>
-                        <div class="review-content">${review.review}</div>
-                        ${review.photo ? `<img src="${review.photo}" alt="Фото отзыва" class="thumbnail">` : ''}
+                        <div class="review-content"></div>
+                        ${review.photo ? `<img src="${escapeHtml(review.photo)}" alt="Фото отзыва" class="thumbnail">` : ''}
                         ${review.representativeResponse ? `
                             <div class="representative-response">
-                                <strong>Ответ:</strong> ${review.representativeResponse}
+                                <strong>Ответ:</strong> <span class="response-content"></span>
                             </div>
                         ` : ''}
                         ${review.isDispute ? '<p class="dispute-label">Спорный отзыв</p>' : ''}
                     </div>
                 `);
 
+                reviewElement.find('.username').text(escapeHtml(review.username));
+                reviewElement.find('.date').text(escapeHtml(review.city + ', ' + review.date));
+                reviewElement.find('.rating').text(escapeHtml(review.rating));
+                reviewElement.find('.review-content').text(escapeHtml(review.review));
+                if (review.representativeResponse) {
+                    reviewElement.find('.response-content').text(escapeHtml(review.representativeResponse));
+                }
+
                 container.append(reviewElement);
             });
 
             $('.thumbnail').on('click', function() {
-                const fullImg = $('<div class="full-img"><img src="' + $(this).attr('src') + '"></div>');
+                const fullImg = $('<div class="full-img"><img></div>');
+                fullImg.find('img').attr('src', $(this).attr('src')).attr('alt', $(this).attr('alt'));
                 $('body').append(fullImg);
                 setTimeout(() => fullImg.addClass('show'), 50);
                 fullImg.on('click', function() {
