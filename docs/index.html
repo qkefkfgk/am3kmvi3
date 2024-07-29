@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://code.jquery.com https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com https://cdnjs.cloudflare.com 'unsafe-inline'; font-src https://fonts.gstatic.com; img-src 'self' data:;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://code.jquery.com https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com https://cdnjs.cloudflare.com 'unsafe-inline'; font-src https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data:;">
     <title>Отзывы</title>
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
@@ -23,8 +23,8 @@
         }
         .container {
             max-width: 100%;
-            margin: 20px auto;
-            padding: 20px;
+            margin: 10px auto;
+            padding: 15px;
             background-color: #ffffff;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             border-radius: 12px;
@@ -33,7 +33,7 @@
             color: #333;
             text-align: center;
             margin-bottom: 20px;
-            font-size: 2em;
+            font-size: 1.8em;
             font-weight: 600;
             opacity: 0;
             animation: fadeIn 0.5s ease forwards;
@@ -61,7 +61,7 @@
             width: 100%;
         }
         .rating-stats-title {
-            font-size: 1.2em;
+            font-size: 1.1em;
             font-weight: 600;
             color: #333;
             margin-left: 5px;
@@ -69,13 +69,13 @@
         }
         .telegram-icon {
             color: #0088cc;
-            font-size: 1.2em;
+            font-size: 1.1em;
             text-decoration: none;
             margin-right: 5px;
             flex-shrink: 0;
         }
         .rating-summary {
-            font-size: 1.5em;
+            font-size: 1.3em;
             font-weight: 600;
             margin-bottom: 5px;
         }
@@ -123,14 +123,14 @@
             text-align: center;
             color: #666;
             margin: 20px 0 15px;
-            font-size: 1.2em;
+            font-size: 1.1em;
             opacity: 0;
             animation: fadeIn 0.5s ease forwards 0.4s;
         }
         #citySelect {
             width: 100%;
-            margin-bottom: 30px;
-            padding: 15px;
+            margin-bottom: 20px;
+            padding: 12px;
             border-radius: 8px;
             border: 1px solid #ced4da;
             font-size: 16px;
@@ -138,21 +138,21 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
         .select2-container--default .select2-selection--single {
-            height: 50px;
-            line-height: 50px;
+            height: 46px;
+            line-height: 46px;
             border-color: #ced4da;
             border-radius: 8px;
         }
         .select2-container--default .select2-selection--single .select2-selection__rendered {
-            line-height: 50px;
+            line-height: 46px;
         }
         .select2-container--default .select2-selection--single .select2-selection__arrow {
-            height: 48px;
+            height: 44px;
         }
         .review {
             border-bottom: 1px solid #e0e0e0;
-            padding: 25px 0;
-            margin-bottom: 25px;
+            padding: 20px 0;
+            margin-bottom: 20px;
             position: relative;
             opacity: 0;
             transform: translateY(20px);
@@ -168,12 +168,13 @@
         .user-info {
             display: flex;
             align-items: center;
+            margin-bottom: 10px;
         }
         .username {
             font-weight: 500;
             color: #333;
             margin: 0 10px;
-            font-size: 1.1em;
+            font-size: 1em;
         }
         .date-rating {
             display: flex;
@@ -182,7 +183,7 @@
         }
         .date {
             color: #6c757d;
-            font-size: 0.9em;
+            font-size: 0.85em;
         }
         .rating {
             background-color: #333;
@@ -190,20 +191,21 @@
             padding: 3px 8px;
             border-radius: 20px;
             font-weight: bold;
-            font-size: 0.9em;
+            font-size: 0.85em;
             margin-top: 5px;
         }
         .review-content {
             margin-top: 10px;
-            font-size: 1.1em;
-            line-height: 1.8;
+            font-size: 1em;
+            line-height: 1.6;
         }
         .representative-response {
             background-color: #f8f9fa;
-            padding: 20px;
-            margin-top: 20px;
+            padding: 15px;
+            margin-top: 15px;
             border-radius: 8px;
             border-left: 4px solid #333;
+            font-size: 0.95em;
         }
         .dispute-label {
             color: #dc3545;
@@ -213,6 +215,7 @@
             padding: 5px 10px;
             background-color: #fff3f3;
             border-radius: 4px;
+            font-size: 0.9em;
         }
         .thumbnail {
             max-width: 100%;
@@ -262,6 +265,29 @@
         .select2-search__field::placeholder {
             color: #999;
             font-style: italic;
+        }
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            h1 {
+                font-size: 1.5em;
+            }
+            .rating-stats-title {
+                font-size: 1em;
+            }
+            .rating-summary {
+                font-size: 1.2em;
+            }
+            .subtitle {
+                font-size: 1em;
+            }
+            .review-content {
+                font-size: 0.95em;
+            }
+            .representative-response {
+                font-size: 0.9em;
+            }
         }
     </style>
 </head>
@@ -368,7 +394,7 @@
             $('.select2-search__field').attr('placeholder', 'Введите название города...');
 
             $('#citySelect').on('select2:open', function() {
-                $('.select2-search__field').attr('placeholder', 'Введите название города...');
+                $('.select2-search__field').attr('placeholder', 'Выберите город...');
             });
 
             setTimeout(() => {
