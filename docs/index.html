@@ -9,6 +9,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        html {
+            scroll-behavior: smooth;
+        }
         body {
             font-family: 'Inter', sans-serif;
             background-color: #f0f2f5;
@@ -28,6 +31,7 @@
             background-color: #ffffff;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             border-radius: 12px;
+            padding-bottom: 50vh;
         }
         h1 {
             color: #333;
@@ -395,6 +399,14 @@
 
             $('#citySelect').on('select2:open', function() {
                 $('.select2-search__field').attr('placeholder', 'Введите название города...');
+                setTimeout(function() {
+                    $('.select2-search__field').focus();
+                    scrollToElement('.select2-search__field');
+                }, 0);
+            });
+
+            $('#citySelect').on('select2:close', function() {
+                window.scrollTo(0, 0);
             });
 
             setTimeout(() => {
@@ -494,6 +506,16 @@
             const [day, month, year] = datePart.split('/');
             const [hour, minute] = timePart.split(':');
             return new Date(2000 + parseInt(year), month - 1, day, hour, minute);
+        }
+
+        function scrollToElement(selector) {
+            const element = $(selector);
+            if (element.length) {
+                const offset = element.offset().top - window.innerHeight / 2;
+                $('html, body').animate({
+                    scrollTop: offset
+                }, 300);
+            }
         }
     </script>
 </body>
