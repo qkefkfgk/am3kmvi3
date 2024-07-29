@@ -17,9 +17,9 @@
             line-height: 1.6;
         }
         .container {
-            max-width: 800px;
-            margin: 40px auto;
-            padding: 30px;
+            max-width: 100%;
+            margin: 20px auto;
+            padding: 20px;
             background-color: #ffffff;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             border-radius: 12px;
@@ -28,8 +28,10 @@
             color: #333;
             text-align: center;
             margin-bottom: 20px;
-            font-size: 2.5em;
+            font-size: 2em;
             font-weight: 600;
+            opacity: 0;
+            animation: fadeIn 0.5s ease forwards;
         }
         .rating-stats {
             background-color: #f8f9fa;
@@ -38,6 +40,8 @@
             margin-bottom: 20px;
             text-align: center;
             font-size: 0.9em;
+            opacity: 0;
+            animation: fadeIn 0.5s ease forwards 0.2s;
         }
         .rating-stats-header {
             display: flex;
@@ -102,6 +106,8 @@
         .rating-bar-inner {
             height: 100%;
             background-color: #4a4a4a;
+            width: 0;
+            transition: width 0.5s ease;
         }
         .rating-bar-percent {
             width: 30px;
@@ -113,6 +119,8 @@
             color: #666;
             margin: 20px 0 15px;
             font-size: 1.2em;
+            opacity: 0;
+            animation: fadeIn 0.5s ease forwards 0.4s;
         }
         #citySelect {
             width: 100%;
@@ -141,6 +149,9 @@
             padding: 25px 0;
             margin-bottom: 25px;
             position: relative;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeInUp 0.5s ease forwards;
         }
         .review-header {
             display: flex;
@@ -199,18 +210,12 @@
             border-radius: 4px;
         }
         .thumbnail {
-            max-width: 120px;
-            max-height: 120px;
-            cursor: pointer;
+            max-width: 100%;
+            height: auto;
             border-radius: 8px;
-            transition: transform 0.3s ease;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .thumbnail:hover {
-            transform: scale(1.05);
+            margin-top: 10px;
         }
         .full-img {
-            display: none;
             position: fixed;
             top: 0;
             left: 0;
@@ -221,6 +226,11 @@
             display: flex;
             justify-content: center;
             align-items: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .full-img.show {
+            opacity: 1;
         }
         .full-img img {
             max-width: 90%;
@@ -229,6 +239,24 @@
         }
         .fa-user, .fa-telegram {
             color: #333;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes fadeInUp {
+            from { 
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to { 
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .select2-search__field::placeholder {
+            color: #999;
+            font-style: italic;
         }
     </style>
 </head>
@@ -252,14 +280,14 @@
                 <div class="rating-bar">
                     <span class="rating-bar-label">5★</span>
                     <div class="rating-bar-outer">
-                        <div class="rating-bar-inner" style="width: 98%;"></div>
+                        <div class="rating-bar-inner" style="width: 0%;"></div>
                     </div>
                     <span class="rating-bar-percent">98%</span>
                 </div>
                 <div class="rating-bar">
                     <span class="rating-bar-label">4★</span>
                     <div class="rating-bar-outer">
-                        <div class="rating-bar-inner" style="width: 1%;"></div>
+                        <div class="rating-bar-inner" style="width: 0%;"></div>
                     </div>
                     <span class="rating-bar-percent">1%</span>
                 </div>
@@ -280,7 +308,7 @@
                 <div class="rating-bar">
                     <span class="rating-bar-label">1★</span>
                     <div class="rating-bar-outer">
-                        <div class="rating-bar-inner" style="width: 1%;"></div>
+                        <div class="rating-bar-inner" style="width: 0%;"></div>
                     </div>
                     <span class="rating-bar-percent">1%</span>
                 </div>
@@ -300,8 +328,29 @@
         $(document).ready(function() {
             $('#citySelect').select2({
                 data: cities.map(city => ({ id: city, text: city })),
-                placeholder: "Выберите город"
+                placeholder: "Введите название города...",
+                allowClear: true,
+                language: {
+                    noResults: function() {
+                        return "Город не найден";
+                    }
+                }
             });
+
+            // Установка плейсхолдера для поля поиска
+            $('.select2-search__field').attr('placeholder', 'Введите название города...');
+
+            // Обработчик для сохранения плейсхолдера при открытии/закрытии выпадающего списка
+            $('#citySelect').on('select2:open', function() {
+                $('.select2-search__field').attr('placeholder', 'Введите название города...');
+            });
+
+            // Анимация рейтинговых полос
+            setTimeout(() => {
+                $('.rating-bar-inner').each(function() {
+                    $(this).css('width', $(this).parent().next().text());
+                });
+            }, 500);
 
             fetch(jsonFileUrl)
                 .then(response => response.text())
@@ -341,9 +390,9 @@
                     return dateB - dateA;
                 });
 
-            filteredReviews.forEach(review => {
+            filteredReviews.forEach((review, index) => {
                 const reviewElement = $(`
-                    <div class="review">
+                    <div class="review" style="animation-delay: ${index * 0.1}s;">
                         <div class="review-header">
                             <div class="user-info">
                                 <i class="fas fa-user"></i>
@@ -372,8 +421,10 @@
             $('.thumbnail').on('click', function() {
                 const fullImg = $('<div class="full-img"><img src="' + $(this).attr('src') + '"></div>');
                 $('body').append(fullImg);
+                setTimeout(() => fullImg.addClass('show'), 50);
                 fullImg.on('click', function() {
-                    $(this).remove();
+                    $(this).removeClass('show');
+                    setTimeout(() => $(this).remove(), 300);
                 });
             });
         }
