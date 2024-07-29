@@ -2,8 +2,9 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Отзывы</title>
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -14,6 +15,10 @@
             padding: 0;
             color: #333;
             line-height: 1.6;
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
         }
         .container {
             max-width: 100%;
@@ -121,31 +126,27 @@
             opacity: 0;
             animation: fadeIn 0.5s ease forwards 0.4s;
         }
-        #citySearch {
+        #citySelect {
             width: 100%;
             margin-bottom: 30px;
-            padding: 10px 15px;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #ced4da;
             font-size: 16px;
-            border: 1px solid #ced4da;
+            background-color: #fff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .select2-container--default .select2-selection--single {
+            height: 50px;
+            line-height: 50px;
+            border-color: #ced4da;
             border-radius: 8px;
-            box-sizing: border-box;
         }
-        #cityList {
-            list-style-type: none;
-            padding: 0;
-            margin: 0;
-            max-height: 200px;
-            overflow-y: auto;
-            border: 1px solid #ced4da;
-            border-radius: 8px;
-            display: none;
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            line-height: 50px;
         }
-        #cityList li {
-            padding: 10px 15px;
-            cursor: pointer;
-        }
-        #cityList li:hover {
-            background-color: #f8f9fa;
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: 48px;
         }
         .review {
             border-bottom: 1px solid #e0e0e0;
@@ -217,6 +218,7 @@
             height: auto;
             border-radius: 8px;
             margin-top: 10px;
+            pointer-events: none;
         }
         .full-img {
             position: fixed;
@@ -231,6 +233,7 @@
             align-items: center;
             opacity: 0;
             transition: opacity 0.3s ease;
+            pointer-events: none;
         }
         .full-img.show {
             opacity: 1;
@@ -239,6 +242,7 @@
             max-width: 90%;
             max-height: 90%;
             object-fit: contain;
+            pointer-events: none;
         }
         .fa-user, .fa-telegram {
             color: #333;
@@ -257,30 +261,13 @@
                 transform: translateY(0);
             }
         }
-        @media (max-width: 768px) {
-            .container {
-                margin: 10px;
-                padding: 15px;
-            }
-            h1 {
-                font-size: 1.5em;
-            }
-            .rating-stats-title {
-                font-size: 1em;
-            }
-            .rating-summary {
-                font-size: 1.2em;
-            }
-            .review {
-                padding: 15px 0;
-            }
-            .review-content {
-                font-size: 1em;
-            }
+        .select2-search__field::placeholder {
+            color: #999;
+            font-style: italic;
         }
     </style>
 </head>
-<body>
+<body oncontextmenu="return false;">
     <div class="container">
         <h1>Отзывы</h1>
         <div class="rating-stats">
@@ -334,134 +321,139 @@
                 </div>
             </div>
         </div>
-        <input type="text" id="citySearch" placeholder="Введите название города...">
-        <ul id="cityList"></ul>
+        <p class="subtitle">Выберите город</p>
+        <select id="citySelect"></select>
         <div id="reviewsContainer"></div>
     </div>
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script>
         const jsonFileUrl = 'https://qkefkfgk.github.io/egwegweg/data.json';
         const cities = ["Адлер", "Азов", "Аксай", "Анапа", "Ангарск", "Армавир", "Афипский", "Ачинск", "Балаково", "Батайск", "Белореченск", "Биробиджан", "Благовещенск", "Владикавказ", "Волгодонск", "Волжский", "Вологда", "Гданьск", "Геленджик", "Дербент", "Динская (станица)", "Донецк", "Ейск", "Екатеринбург", "Екатерининская", "Зверево", "Зеленодольск", "Ивановская", "Избербаш", "Иркутск", "Казань", "Калининград", "Каспийск", "Кемерово", "Керчь", "Кизляр", "Колпино", "Копейск", "Кострома", "Краснодар", "Красный сулин", "Кущёвская (станица)", "Луганск", "Махачкала", "Минусинск", "Михайловск", "Моздок", "Москва", "Назрань", "Нальчик", "Невинномысск", "Новая Адыгея", "Новосибирск", "Новочеркасск", "Омск", "Оренбург", "Пермь", "Прохладный", "Пятигорск", "Ростов", "Ростов-на-Дону", "Салехард", "Сальск", "Самара", "Санкт-Петербург", "Саранск", "Саратов", "Светлоград", "Симферополь", "Славянск-на-Кубани", "Сочи", "Ставрополь", "Стерлитамак", "Таганрог", "Тамбов", "Тверь", "Тимашевск", "Тихорецк", "Томск", "Тюмень", "Усолье-Сибирское", "Усть-Илимск", "Устье (Псковская область)", "Устье (Устьянский район)", "Уфа", "Хасавюрт", "Челябинск", "Черемхово", "Черкесск", "Чита", "Чунский", "Шахты", "Якутск", "Ярославль"];
 
         $(document).ready(function() {
-            const citySearch = $('#citySearch');
-            const cityList = $('#cityList');
-
-            citySearch.on('input', function() {
-                const searchTerm = $(this).val().toLowerCase();
-                const filteredCities = cities.filter(city => city.toLowerCase().includes(searchTerm));
-                
-                cityList.empty();
-                if (filteredCities.length > 0 && searchTerm.length > 0) {
-                    filteredCities.forEach(city => {
-                        cityList.append(`<li>${city}</li>`);
-                    });
-                    cityList.show();
-                } else {
-                    cityList.hide();
+            $('#citySelect').select2({
+                data: cities.map(city => ({ id: city, text: city })),
+                placeholder: "Введите название города...",
+                allowClear: true,
+                language: {
+                    noResults: function() {
+                        return "Город не найден";
+                    }
                 }
             });
 
-            cityList.on('click', 'li', function() {
-                const selectedCity = $(this).text();
-                citySearch.val(selectedCity);
-                cityList.hide();
-                fetchReviews(selectedCity);
+            $('.select2-search__field').attr('placeholder', 'Введите название города...');
+
+            $('#citySelect').on('select2:open', function() {
+                $('.select2-search__field').attr('placeholder', 'Введите название города...');
             });
 
-            $(document).on('click', function(e) {
-                if (!$(e.target).closest('#citySearch, #cityList').length) {
-                    cityList.hide();
-                }
-            });
-
-            // Анимация рейтинговых полос
             setTimeout(() => {
                 $('.rating-bar-inner').each(function() {
                     $(this).css('width', $(this).parent().next().text());
                 });
             }, 500);
 
-            function fetchReviews(selectedCity) {
-                fetch(jsonFileUrl)
-                    .then(response => response.text())
-                    .then(text => {
-                        console.log("Raw response:", text);
-                        return JSON.parse(text);
-                    })
-                    .then(data => {
+            fetch(jsonFileUrl)
+                .then(response => response.text())
+                .then(text => {
+                    console.log("Raw response:", text);
+                    return JSON.parse(text);
+                })
+                .then(data => {
+                    $('#citySelect').on('change', function() {
+                        const selectedCity = $(this).val();
                         const filteredReviews = data.filter(item => item.city === selectedCity);
                         displayReviews(filteredReviews);
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        $('#reviewsContainer').html('<p>В данном городе отзывы скрыты в целях безопасности. Выберите другой город.</p>');
-                    });
-            }
-
-            function displayReviews(reviews) {
-                const container = $('#reviewsContainer');
-                container.empty();
-
-                const currentDate = new Date();
-
-                const filteredReviews = reviews
-                    .filter(review => {
-                        const reviewDate = parseDate(review.date);
-                        return reviewDate <= currentDate;
-                    })
-                    .sort((a, b) => {
-                        const dateA = parseDate(a.date);
-                        const dateB = parseDate(b.date);
-                        return dateB - dateA;
                     });
 
-                filteredReviews.forEach((review, index) => {
-                    const reviewElement = $(`
-                        <div class="review" style="animation-delay: ${index * 0.1}s;">
-                            <div class="review-header">
-                                <div class="user-info">
-                                    <i class="fas fa-user"></i>
-                                    <span class="username">${review.username}</span>
-                                    <i class="fab fa-telegram"></i>
-                                </div>
-                                <div class="date-rating">
-                                    <span class="date">${review.date}</span>
-                                    <span class="rating">${review.rating}</span>
-                                </div>
+                    displayReviews(data);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    $('#reviewsContainer').html('<p>В данном городе отзывы скрыты в целях безопасности. Выберите другой город.</p>');
+                });
+        });
+
+        function displayReviews(reviews) {
+            const container = $('#reviewsContainer');
+            container.empty();
+
+            const currentDate = new Date();
+
+            const filteredReviews = reviews
+                .filter(review => {
+                    const reviewDate = parseDate(review.date);
+                    return reviewDate <= currentDate;
+                })
+                .sort((a, b) => {
+                    const dateA = parseDate(a.date);
+                    const dateB = parseDate(b.date);
+                    return dateB - dateA;
+                });
+
+            filteredReviews.forEach((review, index) => {
+                const reviewElement = $(`
+                    <div class="review" style="animation-delay: ${index * 0.1}s;">
+                        <div class="review-header">
+                            <div class="user-info">
+                                <i class="fas fa-user"></i>
+                                <span class="username">${review.username}</span>
+                                <i class="fab fa-telegram"></i>
                             </div>
-                            <div class="review-content">${review.review}</div>
-                            ${review.photo ? `<img src="${review.photo}" alt="Фото отзыва" class="thumbnail">` : ''}
-                            ${review.representativeResponse ? `
-                                <div class="representative-response">
-                                    <strong>Ответ:</strong> ${review.representativeResponse}
-                                </div>
-                            ` : ''}
-                            ${review.isDispute ? '<p class="dispute-label">Спорный отзыв</p>' : ''}
+                            <div class="date-rating">
+                                <span class="date">${review.date}</span>
+                                <span class="rating">${review.rating}</span>
+                            </div>
                         </div>
-                    `);
+                        <div class="review-content">${review.review}</div>
+                        ${review.photo ? `<img src="${review.photo}" alt="Фото отзыва" class="thumbnail">` : ''}
+                        ${review.representativeResponse ? `
+                            <div class="representative-response">
+                                <strong>Ответ:</strong> ${review.representativeResponse}
+                            </div>
+                        ` : ''}
+                        ${review.isDispute ? '<p class="dispute-label">Спорный отзыв</p>' : ''}
+                    </div>
+                `);
 
-                    container.append(reviewElement);
-                });
+                container.append(reviewElement);
+            });
 
-                $('.thumbnail').on('click', function() {
-                    const fullImg = $('<div class="full-img"><img src="' + $(this).attr('src') + '"></div>');
-                    $('body').append(fullImg);
-                    setTimeout(() => fullImg.addClass('show'), 50);
-                    fullImg.on('click', function() {
-                        $(this).removeClass('show');
-                        setTimeout(() => $(this).remove(), 300);
-                    });
-                });
-            }
+            $('.thumbnail').on('click', function(e) {
+                e.preventDefault();
+            });
+        }
 
-            function parseDate(dateString) {
-                const [datePart, timePart] = dateString.split(' ');
-                const [day, month, year] = datePart.split('/');
-                const [hour, minute] = timePart.split(':');
-                return new Date(2000 + parseInt(year), month - 1, day, hour, minute);
-            }
+        function parseDate(dateString) {
+            const [datePart, timePart] = dateString.split(' ');
+            const [day, month, year] = datePart.split('/');
+            const [hour, minute] = timePart.split(':');
+            return new Date(2000 + parseInt(year), month - 1, day, hour, minute);
+        }
+
+        // Защита от копирования
+        document.addEventListener('copy', function(e) {
+            e.preventDefault();
+            return false;
+        });
+
+        document.addEventListener('selectstart', function(e) {
+            e.preventDefault();
+            return false;
+        });
+
+        document.addEventListener('dragstart', function(e) {
+            e.preventDefault();
+            return false;
+        });
+
+        // Отключение контекстного меню
+        document.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+            return false;
         });
     </script>
 </body>
