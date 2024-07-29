@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://code.jquery.com https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com https://cdnjs.cloudflare.com 'unsafe-inline'; font-src https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data:;">
     <title>Отзывы</title>
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
@@ -269,18 +269,6 @@
             color: #999;
             font-style: italic;
         }
-        .select2-container--open .select2-dropdown {
-            top: 100%;
-            bottom: auto;
-        }
-        .select2-container--open .select2-dropdown--below {
-            border-top: none;
-            border-bottom: 1px solid #aaa;
-            border-top-left-radius: 0;
-            border-top-right-radius: 0;
-            border-bottom-left-radius: 4px;
-            border-bottom-right-radius: 4px;
-        }
         @media (max-width: 768px) {
             .container {
                 padding: 10px;
@@ -305,13 +293,11 @@
             }
             .select2-container--open .select2-dropdown {
                 position: fixed;
-                top: auto;
-                bottom: 0;
-                left: 0;
-                right: 0;
+                top: auto !important;
+                bottom: 0 !important;
+                left: 0 !important;
+                right: 0 !important;
                 width: 100% !important;
-                max-height: 50vh;
-                overflow-y: auto;
                 border-radius: 12px 12px 0 0;
                 border: none;
                 box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
@@ -436,7 +422,6 @@
             $('#citySelect').on('select2:open', function() {
                 setTimeout(function() {
                     $('.select2-search__field').attr('placeholder', 'Введите название города...');
-                    $('.select2-search__field').focus();
                 }, 0);
             });
 
@@ -446,25 +431,31 @@
                 });
             }, 500);
 
-            fetch(jsonFileUrl)
-                .then(response => response.text())
-                .then(text => {
-                    console.log("Raw response:", text);
-                    return JSON.parse(text);
-                })
-                .then(data => {
-                    $('#citySelect').on('change', function() {
-                        const selectedCity = $(this).val();
-                        const filteredReviews = data.filter(item => item.city === selectedCity);
-                        displayReviews(filteredReviews);
-                    });
+            $('#citySelect').on('change', function() {
+                const selectedCity = $(this).val();
+                if (selectedCity) {
+                    loadReviews(selectedCity);
+                } else {
+                    $('#reviewsContainer').empty();
+                }
+            });
 
-                    displayReviews(data);
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    $('#reviewsContainer').text('В данном городе отзывы скрыты в целях безопасности. Выберите другой город.');
-                });
+            function loadReviews(city) {
+                fetch(jsonFileUrl)
+                    .then(response => response.text())
+                    .then(text => {
+                        console.log("Raw response:", text);
+                        return JSON.parse(text);
+                    })
+                    .then(data => {
+                        const filteredReviews = data.filter(item => item.city === city);
+                        displayReviews(filteredReviews);
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        $('#reviewsContainer').text('В данном городе отзывы скрыты в целях безопасности. Выберите другой город.');
+                    });
+            }
         });
 
         function displayReviews(reviews) {
