@@ -270,6 +270,18 @@
             color: #999;
             font-style: italic;
         }
+        .select2-container--open .select2-dropdown {
+            top: auto;
+            bottom: 100%;
+        }
+        .select2-container--open .select2-dropdown--below {
+            border-top: 1px solid #aaa;
+            border-bottom: none;
+            border-top-left-radius: 4px;
+            border-top-right-radius: 4px;
+            border-bottom-left-radius: 0;
+            border-bottom-right-radius: 0;
+        }
         @media (max-width: 768px) {
             .container {
                 padding: 10px;
@@ -291,6 +303,15 @@
             }
             .representative-response {
                 font-size: 0.9em;
+            }
+            .select2-container--open .select2-dropdown {
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                width: 90% !important;
+                max-height: 80vh;
+                overflow-y: auto;
             }
         }
     </style>
@@ -392,21 +413,19 @@
                     noResults: function() {
                         return "Город не найден";
                     }
-                }
+                },
+                dropdownPosition: 'below'
             });
 
-            $('.select2-search__field').attr('placeholder', 'Выберите город...');
+            // Добавляем placeholder к полю ввода
+            $('.select2-search__field').attr('placeholder', 'Введите название города...');
 
+            // Устанавливаем placeholder при открытии выпадающего списка
             $('#citySelect').on('select2:open', function() {
-                $('.select2-search__field').attr('placeholder', 'Введите название города...');
                 setTimeout(function() {
+                    $('.select2-search__field').attr('placeholder', 'Введите название города...');
                     $('.select2-search__field').focus();
-                    scrollToElement('.select2-search__field');
                 }, 0);
-            });
-
-            $('#citySelect').on('select2:close', function() {
-                window.scrollTo(0, 0);
             });
 
             setTimeout(() => {
@@ -506,16 +525,6 @@
             const [day, month, year] = datePart.split('/');
             const [hour, minute] = timePart.split(':');
             return new Date(2000 + parseInt(year), month - 1, day, hour, minute);
-        }
-
-        function scrollToElement(selector) {
-            const element = $(selector);
-            if (element.length) {
-                const offset = element.offset().top - window.innerHeight / 2;
-                $('html, body').animate({
-                    scrollTop: offset
-                }, 300);
-            }
         }
     </script>
 </body>
