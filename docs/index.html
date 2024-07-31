@@ -160,9 +160,8 @@
         .review-header {
             display: flex;
             justify-content: space-between;
-            align-items: flex-start;
+            align-items: center;
             margin-bottom: 15px;
-            flex-wrap: wrap;
         }
         .user-info {
             display: flex;
@@ -174,14 +173,16 @@
             margin: 0 10px;
             font-size: 1.1em;
         }
-        .date-rating {
+        .review-meta {
             display: flex;
-            flex-direction: column;
-            align-items: flex-end;
-        }
-        .date {
-            color: #6c757d;
+            align-items: center;
+            justify-content: flex-end;
             font-size: 0.9em;
+            color: #6c757d;
+            white-space: nowrap;
+        }
+        .city, .date, .rating {
+            display: inline-block;
         }
         .rating {
             background-color: #333;
@@ -189,8 +190,6 @@
             padding: 3px 8px;
             border-radius: 20px;
             font-weight: bold;
-            font-size: 0.9em;
-            margin-top: 5px;
         }
         .review-content {
             margin-top: 10px;
@@ -265,9 +264,83 @@
             color: #999;
             font-style: italic;
         }
+        .secure-connection {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 3px 8px;
+            border-radius: 12px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            font-size: 12px;
+            z-index: 1000;
+        }
+        .secure-connection .shield {
+            margin-right: 5px;
+            position: relative;
+            width: 16px;
+            height: 16px;
+        }
+        .secure-connection .shield::before {
+            content: '\f3ed';
+            font-family: 'Font Awesome 5 Free';
+            font-weight: 900;
+            font-size: 16px;
+            color: #000;
+        }
+        .secure-connection .icon {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 8px;
+            color: white;
+        }
+        @keyframes rotate {
+            0% { transform: translate(-50%, -50%) rotate(0deg); }
+            100% { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+        @keyframes fadeInCheck {
+            0% { opacity: 0; }
+            100% { opacity: 1; }
+        }
+        .no-reviews-message {
+            background-color: #fff3cd;
+            color: #856404;
+            padding: 12px 15px;
+            border-radius: 6px;
+            margin-top: 15px;
+            text-align: center;
+            font-size: 0.95em;
+            border: 1px solid #ffeeba;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            max-width: 80%;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .no-reviews-message p {
+            margin: 0;
+            line-height: 1.4;
+        }
+        .no-reviews-message::before {
+            content: '\f071';
+            font-family: 'Font Awesome 5 Free';
+            font-weight: 900;
+            margin-right: 8px;
+            color: #856404;
+        }
     </style>
 </head>
 <body oncontextmenu="return false;">
+    <div class="secure-connection">
+        <div class="shield">
+            <i class="icon fas fa-spinner fa-spin"></i>
+        </div>
+        <span>Защищенное соединение</span>
+    </div>
+
     <div class="container">
         <h1>Отзывы</h1>
         <div class="rating-stats">
@@ -373,13 +446,26 @@
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    $('#reviewsContainer').html('<p>В данном городе отзывы скрыты в целях безопасности и доступны только для пользователей хотя бы с 1 покупкой. Выберите другой город.</p>');
+                    $('#reviewsContainer').html('<div class="no-reviews-message"><p>В этом городе отзывы скрыты в целях безопасности и доступны только для пользователей с min. 1 заказом. Пожалуйста, выберите другой город.</p></div>');
                 });
+
+            setTimeout(() => {
+                $('.secure-connection .icon').removeClass('fa-spinner fa-spin').addClass('fa-check');
+                $('.secure-connection .icon').css({
+                    'opacity': '0',
+                    'animation': 'fadeInCheck 0.5s ease forwards'
+                });
+            }, 2000);
         });
 
         function displayReviews(reviews) {
             const container = $('#reviewsContainer');
             container.empty();
+
+            if (reviews.length === 0) {
+                container.html('<div class="no-reviews-message"><p>В этом городе отзывы скрыты в целях безопасности и доступны только для пользователей с min. 1 заказом. Пожалуйста, выберите другой город.</p></div>');
+                return;
+            }
 
             const currentDate = new Date();
 
@@ -403,9 +489,8 @@
                                 <span class="username">${review.username}</span>
                                 <i class="fab fa-telegram"></i>
                             </div>
-                            <div class="date-rating">
-                                <span class="date">${review.date}</span>
-                                <span class="rating">${review.rating}</span>
+                            <div class="review-meta">
+                                <span class="city">${review.city}</span>&nbsp;&nbsp;<span class="date">${review.date}</span>&nbsp;&nbsp;<span class="rating">${review.rating}</span>
                             </div>
                         </div>
                         <div class="review-content">${review.review}</div>
@@ -458,3 +543,4 @@
     </script>
 </body>
 </html>
+</body></html>
