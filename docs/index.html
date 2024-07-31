@@ -284,28 +284,27 @@
         }
         .secure-connection .shield {
             margin-right: 4px;
-            position: relative;
             width: 14px;
             height: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
-        .secure-connection .shield::before {
-            content: '\f3ed';
-            font-family: 'Font Awesome 5 Free';
-            font-weight: 900;
+        .secure-connection .shield i {
             font-size: 14px;
             color: #000;
         }
-        .secure-connection .icon {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 7px;
-            color: white;
+        .secure-connection .connection-status {
+            margin-right: 4px;
+            width: 14px;
+            height: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
-        @keyframes rotate {
-            0% { transform: translate(-50%, -50%) rotate(0deg); }
-            100% { transform: translate(-50%, -50%) rotate(360deg); }
+        .secure-connection .connection-status i {
+            font-size: 14px;
+            color: #000;
         }
         @keyframes fadeInCheck {
             0% { opacity: 0; }
@@ -338,9 +337,12 @@
 <body oncontextmenu="return false;">
     <div class="secure-connection">
         <div class="shield">
+            <i class="fas fa-shield-alt"></i>
+        </div>
+        <div class="connection-status">
             <i class="icon fas fa-spinner fa-spin"></i>
         </div>
-        <span>Защищенное соединение</span>
+        <span>Защищенное соединение TOR</span>
     </div>
 
     <div class="container">
@@ -452,11 +454,13 @@
                 });
 
             setTimeout(() => {
-                $('.secure-connection .icon').removeClass('fa-spinner fa-spin').addClass('fa-check');
-                $('.secure-connection .icon').css({
-                    'opacity': '0',
-                    'animation': 'fadeInCheck 0.5s ease forwards'
-                });
+                $('.secure-connection .connection-status .icon')
+                    .removeClass('fa-spinner fa-spin')
+                    .addClass('fa-check')
+                    .css({
+                        'opacity': '0',
+                        'animation': 'fadeInCheck 0.5s ease forwards'
+                    });
             }, 2000);
         });
 
