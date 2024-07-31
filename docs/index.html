@@ -188,11 +188,11 @@
             margin-bottom: 5px;
         }
         .rating {
-            color: #fff;
             background-color: #333;
+            color: white;
             padding: 2px 6px;
             border-radius: 4px;
-            font-size: 0.85em;
+            font-weight: bold;
         }
         .review-content {
             margin-top: 8px;
@@ -340,7 +340,7 @@
         <div class="shield">
             <i class="icon fas fa-spinner fa-spin"></i>
         </div>
-        <span>Защищенное соединение TOR</span>
+        <span>Защищенное соединение</span>
     </div>
 
     <div class="container">
@@ -477,8 +477,8 @@
                     return reviewDate <= currentDate;
                 })
                 .sort((a, b) => {
-                    const dateA = parseDate(a.date);
                     const dateB = parseDate(b.date);
+                    const dateA = parseDate(a.date);
                     return dateB - dateA;
                 });
 
@@ -496,13 +496,13 @@
                             </div>
                         </div>
                         <div class="review-content">${review.review}</div>
+                        ${review.isDispute === "true" ? '<p class="dispute-label">Отзыв оставлен после диспута</p>' : ''}
                         ${review.photo ? `<img src="${review.photo}" alt="Фото отзыва" class="thumbnail">` : ''}
                         ${review.representativeResponse ? `
                             <div class="representative-response">
                                 <strong>Ответ:</strong> ${review.representativeResponse}
                             </div>
                         ` : ''}
-                        ${review.isDispute ? '<p class="dispute-label">Отзыв оставлен после диспута</p>' : ''}
                     </div>
                 `);
 
